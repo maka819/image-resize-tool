@@ -37,7 +37,11 @@ def generate_store_webp_images(input_path, output_dir):
     try:
         with Image.open(input_path) as img:
             base_name = os.path.splitext(os.path.basename(input_path))[0]
-            sizes = {"high": (1600, 900), "standard": (800, 450)}
+            sizes = {
+                "ultra": (2560, 1440), # WQHD/4K向け
+                "high": (1600, 900),   # @2x
+                "standard": (800, 450) # 1x
+            }
 
             for key, size in sizes.items():
                 # 16:9クロップ & リサイズ処理
@@ -56,7 +60,12 @@ def generate_store_webp_images(input_path, output_dir):
 
                 temp_img = temp_img.resize(size, Image.Resampling.LANCZOS)
 
-                suffix = "@2x" if key == "high" else ""
+                if key == "ultra":
+                    suffix = "full"
+                elif key == "high":
+                    suffix = "@2x"
+                else:
+                    suffix = ""
                 output_path = os.path.join(output_dir, f"{base_name}{suffix}.webp")
                 
                 temp_img.save(output_path, "WEBP", quality=90)
