@@ -1,10 +1,11 @@
 import os
 import glob
+import argparse
 from PIL import Image
 
-def process_all_images(input_dir="inputs", output_dir="dist"):
+def process_all_images(input_dir="inputs", output_dir="dist", mode="resize"):
     """
-    指定されたフォルダ内の画像をすべてスキャンし、16:9のWebP画像を一括生成する
+    指定されたフォルダ内の画像をすべてスキャンし、指定モードでWebP画像を一括生成する
     """
     # サポートする拡張子
     extensions = ("*.jpg", "*.jpeg", "*.png", "*.bmp")
@@ -28,7 +29,10 @@ def process_all_images(input_dir="inputs", output_dir="dist"):
     print(f"🚀 {len(target_files)} 件の処理を開始します...")
 
     for file_path in target_files:
-        generate_store_webp_images(file_path, output_dir)
+        if mode == "resize":
+            generate_store_webp_images(file_path, output_dir)
+        elif mode == "original":
+            convert_original_webp(file_path, output_dir)
 
 def generate_store_webp_images(input_path, output_dir):
     """
@@ -74,6 +78,25 @@ def generate_store_webp_images(input_path, output_dir):
     except Exception as e:
         print(f"  ∟ ❌ {input_path} の処理中にエラー: {e}")
 
+def convert_original_webp(input_path, output_dir):
+    """
+    1枚の画像をリサイズせずに元のサイズのままWebPに変換
+    """
+    try:
+        with Image.open(input_path) as img:
+            base_name = os.path.splitext(os.path.basename(input_path))[0]
+            output_path = os.path.join(output_dir, f"{base_name}.webp")
+            img.save(output_path, "WEBP", quality=90)
+            print(f"  ∟ ✅ {output_path}")
+    except Exception as e:
+        print(f"  ∟ ❌ {input_path} の処理中にエラー: {e}")
+
 if __name__ == "__main__":
-    # フォルダを指定して実行
-    process_all_images(input_dir="raw_assets", output_dir="dist")
+    parser = argparse.ArgumentParser(description="画像をWebPに一括変換するツール")
+    parser.add_argument("--mode", choices=["resize", "original"], default="resize", help="実行モード: resize (16:9クロップ＆3サイズ生成), original (元サイズのまま変換)")
+    parser.add_argument("--input", default="raw_assets", help="入力フォルダのパス (デフォルト: raw_assets)")
+    parser.add_argument("--output", default="dist", help="出力フォルダのパス (デフォルト: dist)")
+    
+    args = parser.parse_args()
+    
+    process_all_images(input_dir=args.input, output_dir=args.output, mode=args.mode)
